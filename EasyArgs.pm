@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 #######################################################
@@ -62,7 +62,8 @@ sub DecomposeLevel
 	my @unclaimed_arguments = @{$parent_obj->{Arguments}};
 
 	$parent_obj->{Arguments}=[];
-	delete($parent_obj->{Cache});
+	$parent_obj->{Cache}={};
+	$parent_obj->{Used}={};
 
 	while(scalar(@unclaimed_arguments))
 		{
@@ -186,7 +187,8 @@ sub ParseArgumentsForThisLevel
 	my $duplicate_response = $obj->{DuplicateArgResponseKey};
 
 	my @results;
-	delete($obj->{Cache});
+	$obj->{Cache}={};
+	$obj->{Used}={};
 
 	for(my $index=0; $index<scalar(@{$obj->{Arguments}}); $index++)
 		{
@@ -311,6 +313,7 @@ sub Value
 #######################################################
 {
 	$_[0]->ParseIfNeeded;
+	$_[0]->{Used}->{$_[1]}=1;
 	return ($_[0]->{Cache}->{$_[1]});
 }
 
@@ -324,11 +327,25 @@ sub Exists
 #######################################################
 {
 	$_[0]->ParseIfNeeded;
+	$_[0]->{Used}->{$_[1]}=1;
 	return exists($_[0]->{Cache}->{$_[1]});
 }
 
 
+#######################################################
+sub Unused
+#######################################################
+{
+	my $obj=$_[0];
+	my %return;
+	while ( my ($key,$val) = each(%{$obj->{Cache}}) )
+		{
+		next if (exists($obj->{Used}->{$key}));
+		$return{$key}=$val;
+		}	
 
+	return (%return);
+}
 
 
 
@@ -617,6 +634,24 @@ sub Exists
 
 
 #######################################################
+# return a hash of all the unused arguments at the current level
+#######################################################
+sub Unused
+#######################################################
+{
+	my $obj=$master_object;
+	if(ref($_[0]))
+		{
+		$obj=shift(@_);
+		}
+	my $level = $obj->{CurrentLevel};
+
+	return ($level->Unused);
+}
+
+
+
+#######################################################
 sub EzArgs
 #######################################################
 {
@@ -630,20 +665,14 @@ sub EzArgs
 	my $method = shift(@params);
 
 	# if user passes in an parameter, "-l" for example,
-	# and that parameter does not exist as a method,
-	# AND that parameter contains no whitespace,
+	# (something that starts with a '-' or '+')
 	# then assume it is a command line argument and
 	# call Exists on it.
-	unless($master_object->can($method))
+	if($method =~ /^[\-\+]/)
 		{
-		if($method=~/\s/)
-			{
-			croak "prefix '$method' with 'Exists' in call to EzArgs";
-			}
 		push(@params,$method);
 		$method="Exists";
 		}
-
 
 	return ($master_object->$method(@params));
 
@@ -748,7 +777,9 @@ EasyArgs - Perl module for easily handling command line arguments.
 =head1 DESCRIPTION
 
 EasyArgs is Yet Another module for parsing command line arguments.
-(The first being Getopt::Declare by Damian Conway, available on CPAN)
+
+( The first being Getopt::Long and Getopt::Short, which comes standard with perl.
+The second being Getopt::Declare by Damian Conway, available on CPAN)
 
 EasyArgs was designed to be easy to use for basic argument handling.
 
@@ -774,7 +805,8 @@ hash to test for the existence of an argument and for that argument's value.
 	
 	if(exists($args{'-l'}))
 		{
-		print "-l log file value is ". ($args{'-l'}) ."\n";
+		my $value = $args{'-l'};
+		print "-l log file value is $value \n";
 		}
 
 	%> script.pl -l=output.txt
@@ -782,11 +814,19 @@ hash to test for the existence of an argument and for that argument's value.
 
 =head2 TEST FOR EXISTENCE OF AN ARGUMENT:
 
-Passing an argument into EzArgs will return a boolean indicating
-whether or not that argument exists on the command line or not.
-This avoids the need of making a hash.
+You can pass EzArgs the string 'Exists' and the name of the argument,
+and the subroutine will return a boolean indicating whether or not
+that argument exists on the command line.
+
+	die "help is unavailable \n" if(EzArgs('Exists', 'help'));
+
+Existence shortcut:
+
+If the argument begins with [+-], then you can simply pass in the argument.
+EzArgs will assume you are testing that arguments existence.
 
 	print "verbose mode on\n" if(EzArgs('-v'));
+
 
 =head2 GET THE VALUE FOR AN ARGUMENT:
 
@@ -796,9 +836,41 @@ and the subroutine will return the value associated with that argument.
 	my $log=EzArgs('Value', '-l');
 	open(my $fh, '>'.$log) or die;
 
+
+=head2 TESTING FOR UNUSED ARGUMENTS
+
+Calling EzArgs('Exists', $arg) or EzArgs('Value', $arg) will mark
+an internal flag that $arg has been "used". The flag indicates that
+the user has "used" that argument in some way in the program.
+
+Once you have tested ('Value', 'Exists') for all arguments that the 
+program will use, you can get the "unused" arguments and handle them 
+as you wish. This is a good and easy way to report unhandled arguments 
+as an error.
+
+	
+	use EasyArgs('EzArgs');
+	
+	if(EzArgs('-l'))
+		{
+		my $value = EzArgs('Value','-l');
+		print "-l log file value is $value \n";
+		}
+
+	my %hash = EzArgs('Unused');
+	my @keys = keys(%hash);
+	die "Unhandled arguments: ". (join(' ', @keys)) ."\n" if(@keys);
+
+	# %> script.pl -l=output.txt -v
+	# -l log file is output.txt
+	# Unhandled arguments: -v
+
+
+
+
 =head1 OPTIONS AVALAILABLE WHEN USING EASYARGS
 
-When you use EasyArgs, you can pass it additional information
+When you "use EasyArgs", you can pass it additional information
 that tells it how to parse the command line arguments.
 This is in the form of Method/Parameter pairs that are included
 on the use EasyArgs line. The parameters are passed as an array ref

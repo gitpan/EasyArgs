@@ -9,3 +9,7 @@ Revision history for Perl extension EasyArgs.
 	- added copyright notices and Perl Artistic License
 	- changed "duplicate" arg responses to include "accumulate"
 	- added some examples.
+
+0.03	Thu Sep  5 12:35:05 EDT 2002
+	- added "Unused" method
+	- return a hash of arg/value pairs for all "unused" arguments.

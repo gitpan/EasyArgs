@@ -3,6 +3,7 @@ EasyArgs.pm
 example_cvs.pl
 example_dash_f.pl
 example_duplicate.pl
+example_unused.pl
 Makefile.PL
 MANIFEST
 README.txt
