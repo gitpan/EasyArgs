@@ -13,3 +13,7 @@ Revision history for Perl extension EasyArgs.
 0.03	Thu Sep  5 12:35:05 EDT 2002
 	- added "Unused" method
 	- return a hash of arg/value pairs for all "unused" arguments.
+
+1.00	Tue Oct 1 2002
+	- complete rewrite, much better/cleaner interface.
+	- can now be used in object oriented mode

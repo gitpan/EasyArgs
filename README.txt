@@ -3,25 +3,38 @@ EasyArgs - Perl module for easily handling command line arguments.
 
 
 EasyArgs is Yet Another module for parsing command line arguments.
-(The first being Getopt::Declare by Damian Conway, available on CPAN)
+
+( The first being Getopt::Long and Getopt::Short, which comes standard with perl.
+The second being Getopt::Declare by Damian Conway, available on CPAN)
 
 EasyArgs was designed to be easy to use for basic argument handling.
 
-In its simplest form, you can use the module and import the one exportable
-subroutine called EzArgs. This will set up the module to parse the command 
-line arguments in its basic, default configuration. Calling the EzArgs 
-subroutine without any arguments will cause it to return a hash of all
-the argument/value pairs from the command line arguments.
+	use EasyArgs;
 
 
-	use EasyArgs('EzArgs');
+	my $obj = EasyArgs->EasyArgs_New
+		(
+		EasyArgs_ArgConfig =>
+			{
+			-f => 	{
+					Assignment => 'Next',
+					},
+			}
+	
+		);
 
-	my %args = EzArgs;
-
-	if(exists($args{'-l'}))
+	if($obj->EasyArgs_Exists('-f'))
 		{
-		print "-l log file value is ". ($args{'-l'}) ."\n";
+		my  $file = $obj->EasyArgs_Value('-f');
+	
+		print "file is $file \n";
+		
 		}
+	else
+		{
+		print "no -f option used\n";
+		}
+	
 
 
 AUTHOR
