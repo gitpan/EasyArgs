@@ -8,10 +8,11 @@ EasyArgs is Yet Another module for parsing command line arguments.
 EasyArgs was designed to be easy to use for basic argument handling.
 
 In its simplest form, you can use the module and import the one exportable
-subroutine called EzArgs.
+subroutine called EzArgs. This will set up the module to parse the command 
+line arguments in its basic, default configuration. Calling the EzArgs 
+subroutine without any arguments will cause it to return a hash of all
+the argument/value pairs from the command line arguments.
 
-This will set up the module to parse the command line arguments in
-its basic, default configuration. 
 
 	use EasyArgs('EzArgs');
 
@@ -21,5 +22,19 @@ its basic, default configuration.
 		{
 		print "-l log file value is ". ($args{'-l'}) ."\n";
 		}
+
+
+AUTHOR
+
+        Greg London
+        http://www.greglondon.com
+
+COPYRIGHT NOTICE
+
+        Copyright (c) 2002 Greg London. All rights reserved.
+        This program is free software; you can redistribute it and/or
+        modify it under the same terms as Perl itself.
+
+
 
 

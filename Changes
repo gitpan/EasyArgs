@@ -4,3 +4,8 @@ Revision history for Perl extension EasyArgs.
 	- original version; created by h2xs 1.20 with options
 		-XA -n EasyArgs
 
+
+0.02	Wed Sep  4 00:15:26 EDT 2002
+	- added copyright notices and Perl Artistic License
+	- changed "duplicate" arg responses to include "accumulate"
+	- added some examples.

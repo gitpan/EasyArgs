@@ -1,7 +1,9 @@
 Changes
 EasyArgs.pm
-MANIFEST
+example_cvs.pl
+example_dash_f.pl
+example_duplicate.pl
 Makefile.PL
+MANIFEST
 README.txt
-example.pl
 test.pl

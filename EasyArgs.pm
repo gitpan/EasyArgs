@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 #######################################################
@@ -89,9 +89,10 @@ sub SetDuplicateArgResponse
 	my ($obj, $response)=@_;
 
 	unless (
-		   ($response eq 'die') 
-		or ($response eq 'warn')
-		or ($response eq 'ignore')
+		   ($response eq 'die') 		# replace the arg value and die
+		or ($response eq 'warn')		# replace the arg value and warn about it
+		or ($response eq 'replace')		# replace the arg value silently
+		or ($response eq 'accumulate')	# accumulate all values that are associated with this arg name.
 		)
 		{
 		croak "Error: SetDuplicateArgResponse expected 'die' 'warn' or 'ignore' ";
@@ -181,7 +182,7 @@ sub ParseArgumentsForThisLevel
 	$obj->{AtomizerCodeRef}=\&split_assignment_into_arg_value_pair unless(exists($obj->{AtomizerCodeRef}));
 	my  $atomizer_code_ref = $obj->{AtomizerCodeRef};
 
-	$obj->{DuplicateArgResponseKey}='ignore' unless(exists($obj->{DuplicateArgResponseKey}));
+	$obj->{DuplicateArgResponseKey}='replace' unless(exists($obj->{DuplicateArgResponseKey}));
 	my $duplicate_response = $obj->{DuplicateArgResponseKey};
 
 	my @results;
@@ -209,23 +210,47 @@ sub ParseArgumentsForThisLevel
 			{
 			my ($key,$val) = splice(@argument_atoms, 0, 2);
 
-			unless($duplicate_response eq 'ignore')
 				{
-				if(exists($obj->{Cache}->{$key}))
+				if($duplicate_response eq 'accumulate')
 					{
-					my $msg = "$duplicate_response: duplicate command line argument '$key' \n";
-					if($duplicate_response eq 'die')
+					if(exists($obj->{Cache}->{$key}))
 						{
-						die $msg;
+						# silent
+						# if Cache doesn't have an array ref for this item, create one.
+						unless(ref($obj->{Cache}->{$key}) eq 'ARRAY')
+							{
+							my $old_val = $obj->{Cache}->{$key};
+							$obj->{Cache}->{$key} = [ $old_val ];
+							}
+						push(@{$obj->{Cache}->{$key}}, $val);
 						}
 					else
 						{
-						warn $msg;
+						$obj->{Cache}->{$key}=$val;
 						}
 					}
-				}
+				else
+					{
+					if(exists($obj->{Cache}->{$key}))
+						{
+						my $msg = "$duplicate_response: duplicate command line argument '$key' \n";
+						if($duplicate_response eq 'die')
+							{
+							die $msg;
+							}
+						elsif($duplicate_response eq 'warn')
+							{
+							warn $msg;
+							}
+						elsif($duplicate_response eq 'replace')
+							{
+							# silently replace
+							}
+						}
+					$obj->{Cache}->{$key}=$val;
+					}
 
-			$obj->{Cache}->{$key}=$val;
+				}
 			}
 		}
 }
@@ -963,7 +988,14 @@ statement as the first parameter.
 
 =head1 AUTHOR
 
-Greg London, email@greglondon.com 
+Greg London
+http://www.greglondon.com
+
+=head1 COPYRIGHT NOTICE
+
+Copyright (c) 2002 Greg London. All rights reserved.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
